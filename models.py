@@ -67,22 +67,22 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     author = db.Column(db.String())
     created = db.Column(db.DateTime)
-    body = db.Column(db.String())
-    maryID = db.Column(db.String(),  db.ForeignKey('dwf.maryID'), nullable=False)
+    body = db.Column(db.Text)
+    maryid = db.Column(db.String(),  db.ForeignKey('dwf.maryID'), nullable=False)
 
 
-    def __init__(self, author, created, body, maryID):
+    def __init__(self, author, created, body, maryid):
         self.author = author
         self.created = created
         self.body = body
-        self.maryID = maryID
+        self.maryid = maryid
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
 
     def serialize(self):
         return {
-            'maryID': self.id,
+            'maryID': self.maryid,
             'author': self.author,
             'created': self.created,
             'body': self.body
