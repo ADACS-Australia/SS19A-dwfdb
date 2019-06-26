@@ -54,7 +54,7 @@ def get_run_all():
 
 
 # save candidate metadata to DB
-@app.route('/web/create', methods=('GET', 'POST'))
+@app.route('/web/create', methods=['POST'])
 def create_run():
     #app.logger.debug("Fetching image")
     key = ["ID", "field", "ccd", "mary_run", "date", "cand_num", "mag", "emag", 'mjd', "RA", "DEC", "maryID", "sci_path", "sub_path", "temp_path"]
@@ -83,7 +83,7 @@ def create_run():
 # Methods for commenting on objects
 #
 
-@app.route('/web/posts/create', methods=('GET', 'POST'))
+@app.route('/web/posts/create', methods=['POST'])
 def create_post():
     if request.method == 'POST':
 
@@ -130,32 +130,34 @@ def get_post_api():
         return jsonify(results)
 
 
-@app.route('/web/posts/<int:id>/update', methods=('GET', 'POST'))
+@app.route('/web/posts/<int:id>/update', methods=['PUT'])
 def update_post(id):
-    post = get_post(id)
+    # print(id)
+    if request.method == 'PUT':
+        post = Post.query.get(id)
+        body = request.get_json()['body']
+        author = request.get_json()['author']
 
-    if request.method == 'POST':
-        body = query_parameters.get('body')
-        maryid = query_parameters.get('maryID')
-        author = query_parameters.get('author')
-        error = None
-
-        if not body:
-            r = {"error" : 'comment is required.'}
-
-
-        if error is not None:
-            return jsonify(r)
+        if not post:
+            error = {"abort": 'post id is required.'}
+            return jsonify(error)
+        elif not body:
+            error = {"abort": 'post content is required.'}
+            return jsonify(error)
+        elif author != post.author:
+            error = {"abort": 'post author has changed.'}
+            return jsonify(error)
         else:
-            db = get_db()
-            db.execute(
-                'UPDATE post SET author = ?, body = ?, maryID = ?'
-                ' WHERE id = ?',
-                # (body, author, g.dwf['maryID'])
-                (body, author, maryid, id)
-            )
-            db.commit()
-    return jsonify(post)
+            post.body = "updated: " + body
+            post.created = datetime.datetime.utcnow()
+
+            db.session.commit()
+
+            post_update = Post.query.filter_by(id=id)
+            results = [e.serialize() for e in post_update]
+
+            return jsonify(results)
+
 
 
 # @app.route("/name/<name>")

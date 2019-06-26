@@ -83,6 +83,7 @@ class Post(db.Model):
 
     def serialize(self):
         return {
+            'id':self.id,
             'maryID': self.maryid,
             'author': self.author,
             'created': self.created,
