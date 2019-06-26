@@ -117,17 +117,17 @@ class Client(object):
         package = "web"
         method = "create"
         json_payload = self.record
-        print("Sending request", json_payload)
+        print("Sending request")
         try:
             r = requests.post(f"{self.api_url}/{package}/{method}", json=json_payload)
-            if r.status_code == request.codes.OK:
-                return r.get_json()
+            if r.status_code == requests.codes.OK:
+                return r.json()
             else:
                 print("failed request status code ", r.status_code)
-        except:
+        except Exception as e:
             # logging.error("failed")
-            print("failed request, check response")
-            return(r.content)
+            print("failed request, check response ", e)
+            # return(r)
 
 
     def send_post(self):
@@ -139,7 +139,7 @@ class Client(object):
 
         try:
             r = requests.post(f"{self.api_url}/{package}/{method}", json=post_payload)
-            if r.status_code == request.codes.OK:
+            if r.status_code == requests.codes.OK:
                 return r.get_json()
             else:
                 print("failed request")

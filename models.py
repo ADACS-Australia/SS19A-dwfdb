@@ -1,4 +1,5 @@
 from app import db
+import datetime
 
 
 class Dwf(db.Model):
@@ -66,7 +67,7 @@ class Post(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     author = db.Column(db.String())
-    created = db.Column(db.DateTime)
+    created = db.Column(db.DateTime, default=db.func.current_timestamp())
     body = db.Column(db.Text)
     maryid = db.Column(db.String(),  db.ForeignKey('dwf.maryID'), nullable=False)
 

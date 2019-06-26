@@ -2,6 +2,7 @@ import os
 from flask import jsonify
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
+import datetime
 
 app = Flask(__name__)
 
@@ -67,7 +68,7 @@ def create_run():
             db.session.add(new_record)
             db.session.commit()
 
-            records = Dwf.query.filter(Dwf.maryID = request.get_json()['maryID'])
+            records = Dwf.query.filter_by(maryID=request.get_json()['maryID'])
             results = [e.serialize() for e in records]
             if not results:
                 r = {"error": "data wasn't committed"}
@@ -87,9 +88,11 @@ def create_post():
     if request.method == 'POST':
 
         try:
-            new_post = Post(body=query_parameters.get('body'),
-                            maryid = query_parameters.get('maryID'),
-                            author = query_parameters.get('author'))
+            new_post = Post(author = request.get_json()['author'],
+                            created=datetime.datetime.utcnow(),
+                            body=request.get_json()['body'],
+                            maryid = request.get_json()['maryID']
+                            )
             db.session.add(new_post)
             db.session.commit()
             r = {"success":"post with maryID={} was added to DB".format(new_post.maryid)}
@@ -115,21 +118,16 @@ def get_post(id, check_author=True):
 
     return post
 
-@app.route('/web/posts', methods=['POST'])
+@app.route('/web/posts', methods=['GET'])
 def get_post_api():
-    id = query_parameters.get('id')
-    post = get_db().execute(
-        'SELECT maryID, body, created, author'
-        ' FROM post'
-        ' WHERE maryID = ?', id
-    ).fetchone()
-
-    if post is None:
-        r = {"error": 'No posts for this maryID'}
-        # abort(404, "There are no posts for mary id {0}.".format(id))
+    # results = Dwf.query.get(request.get_json()['maryID'])
+    all_records = Post.query.filter_by(maryid=request.get_json()['maryID'])
+    results = [e.serialize() for e in all_records]
+    if results is None:
+        r = {"error": 'No data supplied'}
         return jsonify(r)
     else:
-        return jsonify(post)
+        return jsonify(results)
 
 
 @app.route('/web/posts/<int:id>/update', methods=('GET', 'POST'))
