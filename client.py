@@ -4,14 +4,13 @@ import numpy as np
 from .errors import *
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-#from . import app
 
 # Define a class
 class Client(object):
     def __init__(self, api_url=None, sender=None):
         self.api_url = api_url
         self.sender = sender
-        # self._xy = None
+        self.batch = None
         self.record = None
         self.point = None
         self.post = None
@@ -24,9 +23,8 @@ class Client(object):
         self.sender = sender
 
     #
-    # Workflow methods
+    # Workflow methods - adding the data and checking basic record requirements
     #
-
     def add_record(self, record_dict):
         """creates the dictionary of records and checks data is acceptable"""
 
@@ -102,19 +100,26 @@ class Client(object):
 
     def add_post(self, author=None, maryid=None, body=None):
         """adds a dictionary of comments to the database"""
+
         if not author:
-            print("author required")
+            author = self.sender
+            if not author:
+                print("author required")
         if not maryid:
             print("maryID required")
         if not body:
             print("comment required")
-
+        post_dict = {'author':author, 'maryid': maryid, 'body': body}
         self.post = post_dict
+
+    #
+    # Workflow methods - sending data to the database
+    #
 
     def send_record(self):
         """send records to database"""
 
-        package = "web"
+        package = "web/run"
         method = "create"
         json_payload = self.record
         print("Sending request")
@@ -129,67 +134,22 @@ class Client(object):
             print("failed request, check response ", e)
             # return(r)
 
-
     def send_post(self):
         """send records to database"""
 
-        package = "web"
-        method = "posts/create"
+        package = "web/post"
+        method = "create"
         post_payload = self.post
 
         try:
             r = requests.post(f"{self.api_url}/{package}/{method}", json=post_payload)
             if r.status_code == requests.codes.OK:
-                return r.get_json()
+                return r.json()
             else:
                 print("failed request")
-        except:
+        except Exception as e::
             # logging.error("failed")
-            print("failed")
-
-        # db = get_db()
-        # db.execute(
-        #     'INSERT INTO post (title, body, author_id)'
-        #     ' VALUES (?, ?, ?)',
-        #     (title, body, g.user['id'])
-        # )
-        # db.commit()
-
-    # #
-    # # Web methods
-    # #
-    #
-    # # call_stage_1
-    # def call_get_run(self):
-    #     package = "web"
-    #     method = "stage_1"
-    #     json_payload = {}
-    #
-    #     try:
-    #         r = requests.post(f"{self.api_url}/{package}/{method}", json=json_payload)
-    #     except as e:
-    #         logging.error("failed")
-    #
-    #     if r.status_code == requests.codes.OK:
-    #         return r.get_json()
-    #     else:
-    #         print("failed request")
-    #
-    # # call_stage_2
-    # def call_get_image_metadata(self):
-    #     package = "web"
-    #     method = "stage_2"
-    #     json_payload = {}
-    #
-    #     try:
-    #         r = requests.post(f"{self.api_url}/{package}/{method}", json=json_payload)
-    #     except as e:
-    #         logging.error("failed")
-    #
-    #     if r.status_code == requests.codes.OK:
-    #         return r.get_json()
-    #     else:
-    #         print("failed request")
+            print("failed request ", e)
 
     def set_point(self, xy):
         '''creates a sky coord object from a list with two entries'''
@@ -202,117 +162,3 @@ class Client(object):
         self.c2 = SkyCoord(c2[0]*u.deg, c2[1]*u.deg, frame='icrs')
         d = self.c1.separation(self.c2)
         return(d.radian)
-
-
-    #     if request.method == 'POST':
-    #         title = request.form['title']
-    #         body = request.form['body']
-    #         error = None
-    #
-    #     #     if not title:
-    #     #         error = 'Title is required.'
-    #     #
-    #     #     if error is not None:
-    #     #         flash(error)
-    #     #     else:
-    #     #         db = get_db()
-    #     #         db.execute(
-    #     #             'INSERT INTO post (title, body, author_id)'
-    #     #             ' VALUES (?, ?, ?)',
-    #     #             (title, body, g.user['id'])
-    #     #         )
-    #     #         db.commit()
-    #     #         return redirect(url_for('blog.index'))
-    #     #
-    #     # return render_template('blog/create.html')
-    #
-    # def get_post(id, check_author=True):
-    #     post = get_db().execute(
-    #         'SELECT p.id, title, body, created, author_id, username'
-    #         ' FROM post p JOIN user u ON p.author_id = u.id'
-    #         ' WHERE p.id = ?',
-    #         (id,)
-    #     ).fetchone()
-    #
-    #     if post is None:
-    #         abort(404, "Post id {0} doesn't exist.".format(id))
-    #
-    #     if check_author and post['author_id'] != g.user['id']:
-    #         abort(403)
-    #
-    #     return post
-    #
-    # # call_stage_1
-    # def call_stage_1(self, id, value):
-    #     package = "workflow"
-    #     method = "stage_1"
-    #     json_payload = {
-    #         "id": id,
-    #         "value": value
-    #     }
-    #
-    #     try:
-    #         r = requests.post(f"{self.api_url}/{package}/{method}", json=json_payload)
-    #     except as e:
-    #         logging.error("failed")
-    #
-    #     if r.status_code == requests.codes.NO_CONTENT:
-    #         print("Sucessfully made reqest")
-    #     else:
-    #         print("failed request")
-    #
-    # # call_stage_2
-    # def call_stage_2(self, id, amount):
-    #     package = "workflow"
-    #     method = "stage_2"
-    #     json_payload = {
-    #         "id": id,
-    #         "value": amount
-    #     }
-    #
-    #     try:
-    #         r = requests.post(f"{self.api_url}/{package}/{method}", json=json_payload)
-    #     except as e:
-    #         logging.error("failed")
-    #
-    #     if r.status_code == requests.codes.NO_CONTENT:
-    #         print("Sucessfully made reqest")
-    #     else:
-    #         print("failed request")
-    #
-    #
-    # #
-    # # Web methods
-    # #
-    #
-    # # call_stage_1
-    # def call_get_run(self):
-    #     package = "web"
-    #     method = "stage_1"
-    #     json_payload = {}
-    #
-    #     try:
-    #         r = requests.post(f"{self.api_url}/{package}/{method}", json=json_payload)
-    #     except as e:
-    #         logging.error("failed")
-    #
-    #     if r.status_code == requests.codes.OK:
-    #         return r.get_json()
-    #     else:
-    #         print("failed request")
-    #
-    # # call_stage_2
-    # def call_get_image_metadata(self):
-    #     package = "web"
-    #     method = "stage_2"
-    #     json_payload = {}
-    #
-    #     try:
-    #         r = requests.post(f"{self.api_url}/{package}/{method}", json=json_payload)
-    #     except as e:
-    #         logging.error("failed")
-    #
-    #     if r.status_code == requests.codes.OK:
-    #         return r.get_json()
-    #     else:
-    #         print("failed request")
