@@ -22,7 +22,7 @@ def hello():
 #
 
 # Get all candidates within in d degrees of RA and Dec
-@app.route('/web/get_run', methods=['GET'])
+@app.route('/web/run', methods=['GET'])
 def get_run():
     app.logger.debug("Fetching run")
     ra = float(request.args['RA'])
@@ -54,7 +54,33 @@ def get_run_all():
 
 
 # save candidate metadata to DB
-@app.route('/web/create', methods=['POST'])
+@app.route('/web/run/create', methods=['POST'])
+def create_run():
+    #app.logger.debug("Fetching image")
+    key = ["ID", "field", "ccd", "mary_run", "date", "cand_num", "mag", "emag", 'mjd', "RA", "DEC", "maryID", "sci_path", "sub_path", "temp_path"]
+
+    if request.method == "POST":
+
+        results = Dwf.query.get(request.get_json()['maryID'])
+
+        if not results:
+            new_record = Dwf(id=request.get_json()['ID'], field=request.get_json()['field'], ccd=request.get_json()['ccd'], mary_run=request.get_json()['mary_run'], date=request.get_json()['date'], cand_num=request.get_json()['cand_num'], mag=request.get_json()['mag'], emag=request.get_json()['emag'], mjd=request.get_json()['mjd'], ra=request.get_json()['RA'], dec=request.get_json()['DEC'], maryID=request.get_json()['maryID'], sci_path=request.get_json()['sci_path'], sub_path=request.get_json()['sub_path'], temp_path=request.get_json()['temp_path'])
+            db.session.add(new_record)
+            db.session.commit()
+
+            records = Dwf.query.filter_by(maryID=request.get_json()['maryID'])
+            results = [e.serialize() for e in records]
+            if not results:
+                r = {"error": "data wasn't committed"}
+                return jsonify(r)
+            else:
+                return jsonify(results)
+        else:
+            r = {"error": 'data already exists use update function instead'}
+            return jsonify(r)
+
+# update a mary run entry
+@app.route('/web/run/<maryid>/update', methods=['PUT'])
 def create_run():
     #app.logger.debug("Fetching image")
     key = ["ID", "field", "ccd", "mary_run", "date", "cand_num", "mag", "emag", 'mjd', "RA", "DEC", "maryID", "sci_path", "sub_path", "temp_path"]
@@ -83,44 +109,28 @@ def create_run():
 # Methods for commenting on objects
 #
 
-@app.route('/web/posts/create', methods=['POST'])
+# save a psot/comment associated with a maryID to the DB
+@app.route('/web/post/create', methods=['POST'])
 def create_post():
     if request.method == 'POST':
 
         try:
-            new_post = Post(author = request.get_json()['author'],
+            new_post = Post(author=request.get_json()['author'],
                             created=datetime.datetime.utcnow(),
                             body=request.get_json()['body'],
                             maryid = request.get_json()['maryID']
                             )
             db.session.add(new_post)
             db.session.commit()
-            r = {"success":"post with maryID={} was added to DB".format(new_post.maryid)}
+            r = {"success": "post with maryID={} was added to DB".format(new_post.maryid)}
             return jsonify(r)
         except Exception as e:
             r = {"error":str(e)}
             return jsonify(r)
 
-
-def get_post(id, check_author=True):
-    post = get_db().execute(
-        'SELECT p.id, title, body, created, author_id, username'
-        ' FROM post p JOIN user u ON p.author_id = u.id'
-        ' WHERE p.id = ?',
-        (id,)
-    ).fetchone()
-
-    if post is None:
-        abort(404, "Post id {0} doesn't exist.".format(id))
-
-    if check_author and post['author_id'] != g.user['id']:
-        abort(403)
-
-    return post
-
-@app.route('/web/posts', methods=['GET'])
-def get_post_api():
-    # results = Dwf.query.get(request.get_json()['maryID'])
+# retrieve all comments associated with a maryID
+@app.route('/web/post', methods=['GET'])
+def get_post():
     all_records = Post.query.filter_by(maryid=request.get_json()['maryID'])
     results = [e.serialize() for e in all_records]
     if results is None:
@@ -129,8 +139,8 @@ def get_post_api():
     else:
         return jsonify(results)
 
-
-@app.route('/web/posts/<int:id>/update', methods=['PUT'])
+# update a comment based on id (primary key) - no author changes
+@app.route('/web/post/<int:id>/update', methods=['PUT'])
 def update_post(id):
     # print(id)
     if request.method == 'PUT':
@@ -157,18 +167,6 @@ def update_post(id):
             results = [e.serialize() for e in post_update]
 
             return jsonify(results)
-
-
-
-# @app.route("/name/<name>")
-# def get_book_name(name):
-#     return "name : {}".format(name)
-#
-# @app.route("/details")
-# def get_book_details():
-#     author=request.args.get('author')
-#     published=request.args.get('published')
-#     return "Author : {}, Published: {}".format(author,published)
 
 if __name__ == '__main__':
     app.run()
