@@ -146,8 +146,8 @@ class Client(object):
             if r.status_code == requests.codes.OK:
                 return r.json()
             else:
-                print("failed request")
-        except Exception as e::
+                print("failed request status code ", r.status_code)
+        except Exception as e:
             # logging.error("failed")
             print("failed request ", e)
 
@@ -162,3 +162,18 @@ class Client(object):
         self.c2 = SkyCoord(c2[0]*u.deg, c2[1]*u.deg, frame='icrs')
         d = self.c1.separation(self.c2)
         return(d.radian)
+
+    def get_record(self, ra, dec, dist):
+        ''' queries the DB in a cone search with central RA, DEC and distance dist '''
+
+        package = "web/run"
+        json_payload = {'ra':ra, 'dec':dec, 'd':dist}
+
+        print(f"Sending query {json_payload}")
+        try:
+            r = requests.get(f"{self.api_url}/{package}", json=json_payload)
+            return r
+        except Exception as e:
+            # logging.error("failed")
+            print("failed request, check response ", e)
+            # return(r)
