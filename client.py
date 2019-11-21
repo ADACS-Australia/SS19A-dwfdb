@@ -1,6 +1,4 @@
 import requests
-import logging
-import numpy as np
 from .errors import *
 from astropy import units as u
 from astropy.coordinates import SkyCoord
