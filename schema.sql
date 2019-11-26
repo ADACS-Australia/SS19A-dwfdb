@@ -25,3 +25,13 @@ CREATE TABLE post (
   "body" TEXT NOT NULL
   FOREIGN KEY("maryID") REFERENCES "dwf"("maryID")
 );
+
+CREATE TABLE testdb (
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "author" TEXT,
+  "created" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "ra" REAL NOT NULL,
+  "dec" REAL NOT NULL,
+  "dateplusone" INTEGER,
+  "path" TEXT NOT NULL
+);
