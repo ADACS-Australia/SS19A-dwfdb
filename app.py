@@ -32,7 +32,8 @@ def get_run():
         d = float(request.get_json()['d'])
         dec = float(request.get_json()['dec'])
 
-        query_result = db.session.execute('SELECT * FROM dwf WHERE dwf.ra - :ra < :d AND dwf.dec - :dec < :d',{'ra': ra, 'd': d, 'dec': dec})
+#        query_result = db.session.execute('SELECT * FROM dwf WHERE dwf.ra - :ra < :d AND dwf.dec - :dec < :d',{'ra': ra, 'd': d, 'dec': dec})
+        query_result = db.session.execute("SELECT * FROM dwf WHERE (spoint(radians(dwf.ra),radians(dwf.dec)) @ scircle(spoint(radians(:ra),radians(:dec)),radians(:d)))", {'ra': ra, 'dec': dec, 'd': d})
         Record = namedtuple('Record', query_result.keys())
         records = [Record(*r) for r in query_result.fetchall()]
 
