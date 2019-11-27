@@ -4,6 +4,7 @@ from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 import datetime
+from collections import namedtuple
 
 app = Flask(__name__)
 
@@ -26,20 +27,33 @@ def hello():
 # Get all candidates within in d degrees of RA and Dec
 @app.route('/web/run', methods=['GET'])
 def get_run():
-    app.logger.debug("Fetching run")
+    #app.logger.debug("Fetching run")
     if request.method == 'GET':
         ra = float(request.get_json()['ra'])
         d = float(request.get_json()['d'])
         dec = float(request.get_json()['dec'])
 
-        query_result = Dwf.query.filter(func.abs(Dwf.ra - ra) <= d, func.abs(Dwf.dec - dec) <= d).all()
-        results = [e.serialize() for e in query_result]
-        if results is None:
+        # query_result = Dwf.query.filter(func.abs(Dwf.ra - ra) <= d, func.abs(Dwf.dec - dec) <= d).all()
+        query_result = db.session.execute('SELECT * FROM dwf WHERE dwf.ra - :ra < :d AND dwf.dec - :dec < :d',{'ra': ra, 'd': d, 'dec': dec})
+        Record = namedtuple('Record', query_result.keys())
+        records = [Record(*r) for r in query_result.fetchall()]
+
+        if query_result is None:
             r = {"error": "There are no objects found within {0} of RA {0} and DEC {0}.".format(d, ra, dec)}
             return jsonify(r)
         else:
             app.logger.info("[web] get run successfully called")
-            return jsonify(results)
+            return jsonify(records)
+# raw sql query stackoverflow: https://stackoverflow.com/questions/17972020/how-to-execute-raw-sql-in-flask-sqlalchemy-app
+
+        # results = [e.serialize() for e in query_result]
+
+        # if results is None:
+        #     r = {"error": "There are no objects found within {0} of RA {0} and DEC {0}.".format(d, ra, dec)}
+        #     return jsonify(r)
+        # else:
+        #     app.logger.info("[web] get run successfully called")
+        #     return jsonify(results)
 
 
 # Get all records of candidates
