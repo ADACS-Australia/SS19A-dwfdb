@@ -61,19 +61,18 @@ def get_run_all():
 @app.route('/web/run/create', methods=['POST'])
 def create_run():
     # app.logger.debug("Fetching image")
-    key = ["ID", "field", "ccd", "mary_run", "date", "cand_num", "mag", "emag", 'mjd', "RA", "DEC", "maryID",
-           "sci_path", "sub_path", "temp_path"]
+    #key = ["ID", "field", "ccd", "mary_run", "date", "cand_num", "mag", "emag", 'mjd', "RA", "DEC", "maryID", "sci_path", "sub_path", "temp_path"]
 
     if request.method == "POST":
 
         results = Dwf.query.get(request.get_json()['maryID'])
 
         if not results:
-            new_record = Dwf(id=request.get_json()['ID'], field=request.get_json()['field'],
+            new_record = Dwf(id=request.get_json()['id'], field=request.get_json()['field'],
                              ccd=request.get_json()['ccd'], mary_run=request.get_json()['mary_run'],
                              date=request.get_json()['date'], cand_num=request.get_json()['cand_num'],
                              mag=request.get_json()['mag'], emag=request.get_json()['emag'],
-                             mjd=request.get_json()['mjd'], ra=request.get_json()['RA'], dec=request.get_json()['DEC'],
+                             mjd=request.get_json()['mjd'], ra=request.get_json()['ra'], dec=request.get_json()['dec'],
                              maryID=request.get_json()['maryID'], sci_path=request.get_json()['sci_path'],
                              sub_path=request.get_json()['sub_path'], temp_path=request.get_json()['temp_path'])
             db.session.add(new_record)
