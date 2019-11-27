@@ -2,7 +2,6 @@ import os
 from flask import jsonify
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
 import datetime
 from collections import namedtuple
 
@@ -12,7 +11,7 @@ app.config.from_object(os.environ['APP_SETTINGS'])
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-from models import Dwf, Post, Testdb
+from models import *
 
 
 @app.route("/")
@@ -33,28 +32,17 @@ def get_run():
         d = float(request.get_json()['d'])
         dec = float(request.get_json()['dec'])
 
-        # query_result = Dwf.query.filter(func.abs(Dwf.ra - ra) <= d, func.abs(Dwf.dec - dec) <= d).all()
         query_result = db.session.execute('SELECT * FROM dwf WHERE dwf.ra - :ra < :d AND dwf.dec - :dec < :d',{'ra': ra, 'd': d, 'dec': dec})
         Record = namedtuple('Record', query_result.keys())
         records = [Record(*r) for r in query_result.fetchall()]
 
-        if query_result is None:
+        if records is None:
             r = {"error": "There are no objects found within {0} of RA {0} and DEC {0}.".format(d, ra, dec)}
             return jsonify(r)
         else:
             app.logger.info("[web] get run successfully called")
             return jsonify(records)
 # raw sql query stackoverflow: https://stackoverflow.com/questions/17972020/how-to-execute-raw-sql-in-flask-sqlalchemy-app
-
-        # results = [e.serialize() for e in query_result]
-
-        # if results is None:
-        #     r = {"error": "There are no objects found within {0} of RA {0} and DEC {0}.".format(d, ra, dec)}
-        #     return jsonify(r)
-        # else:
-        #     app.logger.info("[web] get run successfully called")
-        #     return jsonify(results)
-
 
 # Get all records of candidates
 @app.route('/web/run/all', methods=['GET'])
@@ -104,54 +92,23 @@ def create_run():
 
 
 # update a mary run entry
-@app.route('/web/run/<maryid>/update', methods=['PUT'])
-def update_run(maryid):
-    # app.logger.debug("Fetching image")
+@app.route('/web/run/<string:id>/update', methods=['PUT'])
+#@app.route('/web/run/update', methods=['PUT'])
+def update_run(id):
     if request.method == 'PUT':
-        record = Dwf.query.get(maryid)
-        print(record.keys())
-        # for ii in record.__dict__.items():
-        #     print(ii)
-        # # key = ["ID", "field", "ccd", "mary_run", "date", "cand_num", "mag", "emag", 'mjd', "RA", "DEC", "maryID",
-        #        "sci_path", "sub_path", "temp_path"]
-        #
-        #
-        # id=request.get_json()['ID']
-        # field=request.get_json()['field']
-        # ccd=request.get_json()['ccd']
-        # mary_run=request.get_json()['mary_run']
-        # date=request.get_json()['date']
-        # cand_num=request.get_json()['cand_num']
-        # mag=request.get_json()['mag']
-        # emag=request.get_json()['emag']
-        # mjd=request.get_json()['mjd']
-        # ra=request.get_json()['RA']
-        # dec=request.get_json()['DEC']
-        # sci_path=request.get_json()['sci_path']
-        # sub_path=request.get_json()['sub_path']
-        # temp_path=request.get_json()['temp_path'])
-        #
-        # db.session.add(new_record)
-        # db.session.commit()
-        # if not post:
-        #     error = {"abort": 'post id is required.'}
-        #     return jsonify(error)
-        # elif not body:
-        #     error = {"abort": 'post content is required.'}
-        #     return jsonify(error)
-        # elif author != post.author:
-        #     error = {"abort": 'post author has changed.'}
-        #     return jsonify(error)
-        # else:
-        #     post.body = "updated: " + body
-        #     post.created = datetime.datetime.utcnow()
-        #
-        #     db.session.commit()
-        #
-        #     post_update = Post.query.filter_by(id=id)
-        #     results = [e.serialize() for e in post_update]
-        #
-        #     return jsonify(results)
+        record = Dwf.query.filter(Dwf.maryID == request.get_json()['maryID'])
+        # print(record)
+        results = [e.serialize() for e in record]
+        if not results:
+            r = {"error": "no entry found"}
+            return jsonify(r)
+        else:
+            update_record = Dwf.query.filter_by(maryID=id).update(dict(request.get_json()))
+            db.session.commit()
+
+            record = Dwf.query.filter(Dwf.maryID == request.get_json()['maryID'])
+            results = [e.serialize() for e in record]
+            return jsonify(results)
 
 
 #

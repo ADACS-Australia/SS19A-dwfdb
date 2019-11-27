@@ -27,7 +27,7 @@ class Client(object):
         """creates the dictionary of records and checks data is acceptable"""
 
         # check if values are validated as per schema (integer and positive)
-        for key in ['ID', 'ccd', 'mary_run', 'date', 'cand_num']:
+        for key in ['id', 'ccd', 'mary_run', 'date', 'cand_num']:
             if type(record_dict.get(key)) is not int:
                 raise TableValueError(key + " is not an integer")
             if record_dict.get(key) < 0:
@@ -36,7 +36,7 @@ class Client(object):
                 raise TableValueError(key + " is empty")
 
         # check if required values are numeric
-        for key in ['mag', 'emag', 'mjd', 'RA', 'DEC']:
+        for key in ['mag', 'emag', 'mjd', 'ra', 'dec']:
             if type(record_dict.get(key)) is not float:
                 raise TableValueError(key + " is not a float")
             if record_dict.get(key) is None:
@@ -51,9 +51,9 @@ class Client(object):
 
         if not 10.0 <= record_dict['mag'] <= 30.0:
             raise TableValueError("mag is out of bounds")
-        if not 0.0 <= record_dict['RA'] <= 360.0:
+        if not 0.0 <= record_dict['ra'] <= 360.0:
             raise TableValueError("RA is out of bounds")
-        if not -90.0 <= record_dict['DEC'] <= 90.0:
+        if not -90.0 <= record_dict['dec'] <= 90.0:
             raise TableValueError("DEC is out of bounds")
 
         self.record = record_dict
@@ -67,15 +67,18 @@ class Client(object):
             record_dict = dict(zip(header, columns))
             # check if values are validated as per schema (integer and positive)
             for key in ['ccd', 'mary_run', 'date', 'cand_num']:
-                if type(record_dict.get(key)) is not int:
+                if not record_dict.get(key).is_integer():
                     raise TableValueError(key + " is not an integer")
+                else:
+                    record_dict[key] = int(record_dict[key])
                 if record_dict.get(key) < 0:
                     raise TableValueError(key + " needs to be positive")
                 if record_dict.get(key) is None:
                     raise TableValueError(key + " is empty")
 
+
             # check if required values are numeric
-            for key in ['ID','mag', 'emag', 'mjd', 'RA', 'DEC']:
+            for key in ['id','mag', 'emag', 'mjd', 'ra', 'dec']:
                 if type(record_dict.get(key)) is not float:
                     raise TableValueError(key + " is not a float")
                 if record_dict.get(key) is None:
@@ -90,9 +93,9 @@ class Client(object):
 
             if not 10.0 <= record_dict['mag'] <= 30.0:
                 raise TableValueError("mag is out of bounds")
-            if not 0.0 <= record_dict['RA'] <= 360.0:
+            if not 0.0 <= record_dict['ra'] <= 360.0:
                 raise TableValueError("RA is out of bounds")
-            if not -90.0 <= record_dict['DEC'] <= 90.0:
+            if not -90.0 <= record_dict['dec'] <= 90.0:
                 raise TableValueError("DEC is out of bounds")
         f.close()
 
@@ -123,6 +126,25 @@ class Client(object):
         print("Sending request")
         try:
             r = requests.post(f"{self.api_url}/{package}/{method}", json=json_payload)
+            if r.status_code == requests.codes.OK:
+                return r.json()
+            else:
+                print("failed request status code ", r.status_code)
+        except Exception as e:
+            # logging.error("failed")
+            print("failed request, check response ", e)
+            # return(r)
+
+    def update_record(self):
+        """send records to database"""
+
+        package = "web/run"
+        json_payload = self.record
+        method = f"{json_payload['maryID']}/update"
+
+        print("Sending update request")
+        try:
+            r = requests.put(f"{self.api_url}/{package}/{method}", json=json_payload)
             if r.status_code == requests.codes.OK:
                 return r.json()
             else:
