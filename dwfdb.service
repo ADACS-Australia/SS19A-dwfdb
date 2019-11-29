@@ -1,0 +1,12 @@
+[Unit]
+Description=DWF Database Interface
+
+[Service]
+ExecStart=/home/ubuntu/SS19A-dwfdb/start.sh
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+Type=notify
+NotifyAccess=all
+
+[Install]
+WantedBy=default.target
