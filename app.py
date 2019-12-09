@@ -4,6 +4,9 @@ from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 import datetime
 from collections import namedtuple
+from systemd.daemon import notify, Notification
+
+notify(Notification.READY)
 
 app = Flask(__name__)
 
