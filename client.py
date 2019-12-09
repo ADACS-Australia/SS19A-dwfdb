@@ -171,17 +171,6 @@ class Client(object):
             # logging.error("failed")
             print("failed request ", e)
 
-    def set_point(self, xy):
-        '''creates a sky coord object from a list with two entries'''
-        self.point = SkyCoord(xy[0]*u.deg, xy[1]*u.deg, frame='icrs')
-
-
-    def get_distance(self, c1, c2):
-        ''' returns the angular distance between two points on sky '''
-        self.c1 = SkyCoord(c1[0]*u.deg, c1[1]*u.deg, frame='icrs')
-        self.c2 = SkyCoord(c2[0]*u.deg, c2[1]*u.deg, frame='icrs')
-        d = self.c1.separation(self.c2)
-        return(d.radian)
 
     def get_record(self, ra, dec, dist):
         ''' queries the DB in a cone search with central RA, DEC and distance dist '''
@@ -190,6 +179,21 @@ class Client(object):
         json_payload = {'ra':ra, 'dec':dec, 'd':dist}
 
         print(f"Sending query {json_payload}")
+        try:
+            r = requests.get(f"{self.api_url}/{package}", json=json_payload)
+            return r
+        except Exception as e:
+            # logging.error("failed")
+            print("failed request, check response ", e)
+            # return(r)
+
+    def get_post(self,maryid=None):
+        ''' queries the DB in a cone search with central RA, DEC and distance dist '''
+
+        package = "web/post"
+        json_payload = {'maryID':maryid}
+
+        print(f"Sending post query {json_payload}")
         try:
             r = requests.get(f"{self.api_url}/{package}", json=json_payload)
             return r

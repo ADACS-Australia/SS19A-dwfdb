@@ -44,6 +44,7 @@ def get_run():
             app.logger.info("[web] get run successfully called")
             return jsonify(records)
 # raw sql query stackoverflow: https://stackoverflow.com/questions/17972020/how-to-execute-raw-sql-in-flask-sqlalchemy-app
+# using pgsphere circle and points https://cdsportal.u-strasbg.fr/adqltuto/translator.html
 
 # Get all records of candidates
 @app.route('/web/run/all', methods=['GET'])
