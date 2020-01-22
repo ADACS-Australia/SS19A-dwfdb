@@ -123,7 +123,7 @@ class Client(object):
                 # raise TableValueError("DEC is out of bounds")
 
             if any(df['index'] == i):
-                print(f"There are issues with row {i}, please check returned dataframe")
+                print(f"There are issues with row {i}, please check client.batch for details")
                 # next
             else:
                 package = "web/run"
@@ -134,6 +134,8 @@ class Client(object):
                     r = requests.post(f"{self.api_url}/{package}/{method}", json=json_payload)
                     if not r.status_code == requests.codes.OK:
                         df = df.append({'index': int(i), 'reason': f"failed request status code {r.status_code}"}, ignore_index=True)
+                    else:
+                        df = df.append({'index': int(i), 'reason': r.json()}, ignore_index=True)
                 except Exception as e:
                     df = df.append({'index': int(i), 'reason': f"failed request, check response {e}"}, ignore_index=True)
                     # print("failed request, check response ", e)
