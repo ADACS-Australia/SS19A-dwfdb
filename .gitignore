@@ -3,3 +3,4 @@ migrations/
 __pycache__/
 bashcommand.sh
 .env
+local.py
